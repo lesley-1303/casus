@@ -1,0 +1,23 @@
+.nav {
+  display: flex;
+  gap: 1rem;
+  background-color: #1f2937;
+  padding: 1rem 2rem;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.navButton {
+  background-color: #334155;
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.navButton:hover {
+  background-color: #4b5563;
+}
