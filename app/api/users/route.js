@@ -1,4 +1,4 @@
-import { getAllUsers, createUser } from '@/lib/services/userService'
+import { getAllUsers, createUser, verifyUser } from '@/lib/services/userService'
 
 export async function GET() {
   try {
@@ -12,7 +12,35 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const { name, email, password } = await request.json()
+    const body = await request.json()
+    const { action } = body
+
+    if (action === 'verify') {
+      const { email, password } = body
+      
+      if (!email || !password) {
+        return Response.json(
+          { error: 'Email and password are required' }, 
+          { status: 400 }
+        )
+      }
+      
+      const user = await verifyUser(email, password)
+      
+      if (!user) {
+        return Response.json(
+          { error: 'Invalid email or password' }, 
+          { status: 401 }
+        )
+      }
+      
+      return Response.json({ 
+        message: 'Login successful',
+        user: { id: user.id, name: user.name, email: user.email }
+      })
+    }
+
+    const { name, email, password } = body
     
     if (!name || !email || !password) {
       return Response.json(

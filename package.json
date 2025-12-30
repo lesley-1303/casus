@@ -9,6 +9,7 @@
     "db:init": "node scripts/init-db.mjs"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "next": "16.0.10",
     "pg": "^8.16.3",

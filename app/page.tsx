@@ -3,15 +3,15 @@
 import { useState } from "react";
 import styles from "./page.module.css"
 import InputField from "./components/input/inputField";
+import Button from "./components/button/button";
 
 export default function App() {
-  const [name, setName] = useState<string>();
   const [email, setEmail] = useState<string>();
   const [password, setPassword] = useState<string>();
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function addUser() {
+  async function verifyUser() {
     setLoading(true)
     setError('')
 
@@ -19,18 +19,17 @@ export default function App() {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({action:"verify", email, password })
       })
 
       const data = await res.json()
 
       if (res.ok) {
-        alert('User created successfully!')
-        setName('')
+        alert('Login successfull!')
         setEmail('')
         setPassword('')
       } else {
-        setError(data.error || 'Failed to create user')
+        setError(data.error || 'Failed verify user')
       }
     } catch (err) {
       setError('Network error')
@@ -41,13 +40,6 @@ export default function App() {
 
   return (
     <div className={styles.login}>
-      <InputField
-        title="username"
-        variant="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="enter username"
-      />
       <InputField
         title="email"
         variant="email"
@@ -62,7 +54,11 @@ export default function App() {
         onChange={(e) => setPassword(e.target.value)}
         placeholder="enter password"
       />
-      <button onClick={addUser}>Get Users</button>
+      <div className={styles.buttons}>
+        <Button title="Login" onClick={verifyUser} />
+        <a href="/register">Register</a>
+      </div>
     </div>
+
   );
 }

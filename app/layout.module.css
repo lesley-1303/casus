@@ -5,4 +5,8 @@
   padding: 0;
   font-family: Arial, sans-serif;
   color: #f1f5f9;
+} 
+
+.content {
+  padding-top: 2rem;
 }
