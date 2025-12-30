@@ -6,10 +6,39 @@ import InputField from "./components/input/inputField";
 
 export default function App() {
   const [name, setName] = useState<string>();
-  const [age, setAge] = useState<number>();
-  const [date, setDate] = useState<Date>();
   const [email, setEmail] = useState<string>();
   const [password, setPassword] = useState<string>();
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function addUser() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        alert('User created successfully!')
+        setName('')
+        setEmail('')
+        setPassword('')
+      } else {
+        setError(data.error || 'Failed to create user')
+      }
+    } catch (err) {
+      setError('Network error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className={styles.login}>
       <InputField
@@ -18,26 +47,6 @@ export default function App() {
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="enter username"
-      />
-      <InputField
-        title="age"
-        variant="number"
-        value={age}
-        onChange={(e) => {
-          const value = e.target.value;
-          setAge(value === "" ? undefined : Number(value));
-        }}
-        placeholder="enter age"
-        min={0}
-      />
-      <InputField
-        title="date"
-        variant="date"
-        value={date}
-        onChange={(e) => {
-          const value = e.target.value;
-          setDate(value ? new Date(value) : undefined);
-        }}
       />
       <InputField
         title="email"
@@ -53,6 +62,7 @@ export default function App() {
         onChange={(e) => setPassword(e.target.value)}
         placeholder="enter password"
       />
+      <button onClick={addUser}>Get Users</button>
     </div>
   );
 }

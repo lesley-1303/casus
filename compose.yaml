@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres
+    container_name: postgres_case
+    command: -c shared_buffers=256MB -c max_connections=200
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydatabase
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./scripts:/scripts
+    shm_size: 1g
+    networks:
+      - mynetwork
+    logging:
+      driver: none
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_case
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - 5050:80
+    networks:
+      - mynetwork
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+
+networks:
+  mynetwork:
