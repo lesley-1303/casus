@@ -32,6 +32,19 @@ services:
     depends_on:
       - postgres
 
+  python-api:
+    build:
+      context: ./pdf-extraction-api
+      dockerfile: Dockerfile
+    container_name: python_api_case
+    ports:
+      - 8000:8000
+    networks:
+      - mynetwork
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+
 volumes:
   pgdata:
 
