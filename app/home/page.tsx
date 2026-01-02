@@ -1,8 +1,11 @@
+'use client';
+
+import PDFExtractor from '../components/PDFExtractor/PDFExtractor';
+
 export default function Home() {
   return (
     <div>
-      <h1>Home Page</h1>
-      <p>Welcome to the Home page!</p>
+      <PDFExtractor />
     </div>
   );
 }

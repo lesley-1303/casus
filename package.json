@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "convert:rules": "node scripts/convert.cjs",
     "db:init": "node scripts/init-db.mjs"
   },
   "dependencies": {
@@ -14,7 +15,8 @@
     "next": "16.0.10",
     "pg": "^8.16.3",
     "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react-dom": "19.2.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
