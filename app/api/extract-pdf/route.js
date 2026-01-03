@@ -1,3 +1,4 @@
+import { saveJsonToFile } from '@/lib/services/pdfService';
 
 export async function POST(request) {
   try {
@@ -22,6 +23,11 @@ export async function POST(request) {
     }
 
     const data = await response.json();
+
+    const originalFilename = data.metadata?.filename || 'document.pdf';
+    const savedPath = saveJsonToFile(data, originalFilename, './data');
+    
+    data.savedPath = savedPath;
     
     return Response.json(data, { status: 200 });
     

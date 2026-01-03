@@ -94,7 +94,7 @@ sheetNames.forEach(sheetName => {
   if (dataToSave.length > 0) {
     // Create safe filename from sheet name
     const safeFileName = sheetName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const outputPath = path.join(__dirname, `../public/rules-${safeFileName}.json`);
+    const outputPath = path.join(__dirname, `../data/allrules/rules-${safeFileName}.json`);
     
     // Save to separate file
     fs.writeFileSync(outputPath, JSON.stringify(dataToSave, null, 2));

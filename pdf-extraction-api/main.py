@@ -368,21 +368,6 @@ async def extract_pdf(file: UploadFile = File(...)):
                 page_sections = extract_content_sections(page, page_number, tables, table_bboxes)
                 result["content"].extend(page_sections)
         
-        # Save to JSON file
-        output_dir = Path("output")
-        output_dir.mkdir(exist_ok=True)
-        
-        # Create output filename based on input filename
-        base_filename = Path(file.filename).stem
-        output_filename = output_dir / f"{base_filename}_extracted.json"
-        
-        # Save the JSON
-        with open(output_filename, 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
-        
-        # Add output file path to result
-        result["output_file"] = str(output_filename)
-        
         return result
     
     except Exception as e:
