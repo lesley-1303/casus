@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "convert:rules": "node scripts/convert.cjs",
     "db:init": "node scripts/init-db.mjs"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import { getAllUsers, createUser, verifyUser } from '@/lib/services/userService'
+import { getAllUsers, createUser, verifyUser } from '@/lib/services/DBServices/userService'
 
 export async function GET() {
   try {
