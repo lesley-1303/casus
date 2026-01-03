@@ -71,7 +71,7 @@ sheetNames.forEach(sheetName => {
       const midden = (row['Midden'] || '').toLowerCase();
       const klein = (row['Klein'] || '').toLowerCase();
       
-      return groot === 'i+d' || midden === 'i+d' || klein === 'i+d' || groot === 'i + d' || midden === 'i + d' || klein === 'i + d';
+      return groot === 'i+d' || midden === 'i+d' || klein === 'i+d' || groot === 'i + d' || midden === 'i + d' || klein === 'i + d' || groot === 'i +d' || midden === 'i +d' || klein === 'i +d' || groot === 'i+ d' || midden === 'i+ d' || klein === 'i+ d';
     });
     
     dataToSave = filteredRows;
