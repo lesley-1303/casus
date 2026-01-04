@@ -1,9 +1,10 @@
 import { saveJsonToFile } from '@/lib/services/pdfService';
+import { getUserIdFromRequest } from '@/lib/services/auth';
 
 export async function POST(request) {
   try {
     const pythonApiUrl = 'http://localhost:8000';
-    
+    getUserIdFromRequest(req);
     const arrayBuffer = await request.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 

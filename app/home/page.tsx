@@ -28,7 +28,6 @@ export default function Home() {
   const [selectedRuleType, setSelectedRuleType] = useState<RuleType>(emptyRuleType);
   const [rules, setRules] = useState<Rule[]>([]);
   const [file, setFile] = useState<File | null>(null);
-  const [currentFileName, setCurrentFileName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +59,9 @@ export default function Home() {
     try {
       const response = await fetch('/api/extract-pdf', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
         body: formData,
       });
 
@@ -70,7 +72,7 @@ export default function Home() {
 
       const data = await response.json();
       return data;
-      
+
     } catch (err: any) {
       setError(err.message);
       console.error('Error:', err);
