@@ -41,6 +41,9 @@ export default function Xlslup() {
         try {
             const response = await fetch("/api/upload-excel", {
                 method: "POST",
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                },
                 body: formData,
             });
 
@@ -63,13 +66,23 @@ export default function Xlslup() {
             <h2>Upload Excel File</h2>
 
             <div className={styles["input-group"]}>
-                <input type="file" accept=".xls,.xlsx,.xlsm" onChange={handleFileChange} />
+                <input
+                    className={styles["file-input"]}
+                    type="file"
+                    accept=".xls,.xlsx,.xlsm"
+                    onChange={handleFileChange}
+                />
                 {file && <p className={styles["file-info"]}>{file.name}</p>}
             </div>
 
             {error && <div className={styles.error}>{error}</div>}
 
-            <Button title="Upload" onClick={handleUpload} disabled={!file} />
+            <Button
+                title="Upload"
+                onClick={handleUpload}
+                disabled={!file}
+            />
         </div>
     );
+
 }

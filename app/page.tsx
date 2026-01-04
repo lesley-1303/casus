@@ -28,6 +28,7 @@ export default function App() {
         alert('Login successfull!')
         setEmail('')
         setPassword('')
+        sessionStorage.setItem('token', data.token);
       } else {
         setError(data.error || 'Failed verify user')
       }
