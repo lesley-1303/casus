@@ -27,9 +27,7 @@ export async function POST(request) {
     const originalFilename = data.metadata?.filename || 'document.pdf';
     const savedPath = saveJsonToFile(data, originalFilename, './data');
     
-    data.savedPath = savedPath;
-    
-    return Response.json(data, { status: 200 });
+    return Response.json(savedPath, { status: 200 });
     
   } catch (error) {
     console.error('Error calling Python API:', error);

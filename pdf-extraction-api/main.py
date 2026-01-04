@@ -2,10 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import pdfplumber
 import io
-import json
 from typing import List, Dict, Any
-from pathlib import Path
-
 app = FastAPI(title="PDF Extraction API")
 
 app.add_middleware(
@@ -52,30 +49,6 @@ def is_title(line_text: str, chars: List[Dict]) -> bool:
     is_large_enough = line_font_size >= 12
     
     return is_arial_bold and is_large_enough
-
-def get_line_font_info(chars: List[Dict]) -> Dict[str, Any]:
-    """
-    Extract font information from a line's characters
-    
-    Returns:
-        Dictionary with font name and size info
-    """
-    if not chars:
-        return {"fontname": None, "fontsize": None}
-    
-    font_sizes = [char['size'] for char in chars if 'size' in char]
-    font_names = [char.get('fontname', '') for char in chars if 'fontname' in char]
-    
-    # Get the most common font name
-    fontname = max(set(font_names), key=font_names.count) if font_names else None
-    
-    # Get average font size
-    fontsize = sum(font_sizes) / len(font_sizes) if font_sizes else None
-    
-    return {
-        "fontname": fontname,
-        "fontsize": round(fontsize, 2) if fontsize else None
-    }
 
 def extract_text_with_formatting(page) -> List[Dict[str, Any]]:
     """
@@ -136,12 +109,9 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
         # Find all title positions
         for idx, line in enumerate(lines):
             if is_title(line['text'], line['chars']):
-                font_info = get_line_font_info(line['chars'])
                 title_positions.append({
                     'index': idx,
-                    'text': line['text'].strip(),
-                    'font': font_info['fontname'],
-                    'fontsize': font_info['fontsize']
+                    'text': line['text'].strip()
                 })
         
         # If no titles found, return all text as one section
@@ -151,8 +121,6 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                 return [{
                     "type": "section",
                     "title": None,
-                    "title_font": None,
-                    "title_fontsize": None,
                     "page": page_number,
                     "content": full_text.strip()
                 }]
@@ -171,8 +139,6 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
             sections.append({
                 "type": "section",
                 "title": title_info['text'],
-                "title_font": title_info['font'],
-                "title_fontsize": title_info['fontsize'],
                 "page": page_number,
                 "content": section_text.strip() if section_text.strip() else ""
             })
@@ -221,12 +187,9 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                         sections.append(current_section)
                     
                     # Start new section
-                    font_info = get_line_font_info(line['chars'])
                     current_section = {
                         "type": "section",
                         "title": line['text'].strip(),
-                        "title_font": font_info['fontname'],
-                        "title_fontsize": font_info['fontsize'],
                         "page": page_number,
                         "content": ""
                     }
@@ -243,8 +206,6 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                         current_section = {
                             "type": "section",
                             "title": None,
-                            "title_font": None,
-                            "title_fontsize": None,
                             "page": page_number,
                             "content": text_content
                         }
@@ -260,8 +221,6 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                     current_section = {
                         "type": "section",
                         "title": None,
-                        "title_font": None,
-                        "title_fontsize": None,
                         "page": page_number,
                         "content": ""
                     }
@@ -282,7 +241,6 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                         "type": "table",
                         "headers": table_data[0] if len(table_data) > 0 else [],
                         "data": table_data[1:] if len(table_data) > 1 else [],
-                        "raw_data": table_data
                     })
         
         # Add any remaining buffered text
@@ -292,8 +250,6 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                 current_section = {
                     "type": "section",
                     "title": None,
-                    "title_font": None,
-                    "title_fontsize": None,
                     "page": page_number,
                     "content": text_content
                 }

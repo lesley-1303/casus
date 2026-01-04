@@ -1,9 +1,13 @@
 'use client';
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useEffect } from 'react';
 import Button from '../components/button/button';
 import GenericSelect from '../components/genericselect/genericselect';
+import styles from "./home.module.css";
 
 export default function Home() {
+  useEffect(() => {
+    GetRuleImports();
+  }, []);
 
   const emptyRuleImport: RuleImport = {
     id: '',
@@ -12,7 +16,7 @@ export default function Home() {
     created_at: '',
   };
 
-    const emptyRuleType: RuleType = {
+  const emptyRuleType: RuleType = {
     id: '',
     name: '',
     rule_import_id: '',
@@ -22,7 +26,9 @@ export default function Home() {
   const [selectedRuleImport, setSelectedRuleImport] = useState<RuleImport>(emptyRuleImport);
   const [ruleTypes, setRuleTypes] = useState<RuleType[]>([]);
   const [selectedRuleType, setSelectedRuleType] = useState<RuleType>(emptyRuleType);
+  const [rules, setRules] = useState<Rule[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [currentFileName, setCurrentFileName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +68,9 @@ export default function Home() {
         throw new Error(errorData.detail || 'Failed to extract PDF');
       }
 
+      const data = await response.json();
+      return data;
+      
     } catch (err: any) {
       setError(err.message);
       console.error('Error:', err);
@@ -100,7 +109,7 @@ export default function Home() {
   };
 
   const onRuleImportChange = async (ruleImport: RuleImport) => {
-    if(ruleImport === emptyRuleImport){setSelectedRuleImport(ruleImport); setRuleTypes([]);return}
+    if (ruleImport === emptyRuleImport) { setSelectedRuleImport(ruleImport); setRuleTypes([]); return }
     setSelectedRuleImport(ruleImport)
     setLoading(true);
     setError(null);
@@ -130,54 +139,94 @@ export default function Home() {
     }
   };
 
+  const onRuletypeChange = async (ruleType: RuleType) => {
+    if (ruleType === emptyRuleType) { setRules([]); setSelectedRuleType(ruleType); return }
+    setSelectedRuleType(ruleType)
+    setLoading(true);
+    setError(null);
 
-  // const handleCheck = async () => {
-  //   setLoading(true);
-  //   setError(null);
+    try {
+      const response = await fetch(`/api/rules?rule_type_id=${ruleType.id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
 
-  //   try {
-  //     const response = await fetch('/api/rule-checker', { method: 'GET' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch rule types");
+      }
 
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       throw new Error(errorData.detail || 'Failed to do checks');
-  //     }
 
-  //     const data = await response.json();
-  //     console.log('Check result:', data);
-  //   } catch (err: any) {
-  //     setError(err.message);
-  //     console.error('Error:', err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      const data = await response.json();
+      setRules(data)
+      return data;
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleCheck = async () => {
+    if (rules.length == 0) { alert('need to sellect a rule type'); return }
+    if (file === null) { alert('need to sellect a file'); return }
+    const path = await handleUpload()
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/rule-checker', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          rules: rules,
+          ruleTypeName: selectedRuleType.name,
+          path: path,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to do checks');
+      }
+
+      const data = await response.json();
+      console.log('Check result:', data);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div>
-      <label>
-        Choose PDF File
-      </label>
-      <div>
+    <div className={styles.container}>
+      <h3>Choose PDF File</h3>
+      <div className={styles["file-upload"]}>
         <input
           type="file"
           accept=".pdf"
           onChange={handleFileChange}
-        />
-        <Button
-          title={loading ? "extracting" : "extract"}
-          onClick={handleUpload}
-          disabled={!file || loading}
+          className={styles["file-input"]}
         />
       </div>
+
       {file && (
-        <p>
+        <p className={styles["file-info"]}>
           Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
         </p>
       )}
-      <Button title='get rule imports' onClick={GetRuleImports} />
+
       <GenericSelect<RuleImport>
-        title="Select a excel file"
+        title="Select an Excel file"
         items={ruleImports}
         selectedItem={selectedRuleImport}
         onChange={(item) => onRuleImportChange(item)}
@@ -186,13 +235,14 @@ export default function Home() {
       />
 
       <GenericSelect<RuleType>
-        title="Select a rule type"
+        title="Select a Rule Type"
         items={ruleTypes}
         selectedItem={selectedRuleType}
-        onChange={(item) => setSelectedRuleType(item)}
+        onChange={(item) => onRuletypeChange(item)}
         Label={(m) => m.name}
         emptyItem={emptyRuleType}
       />
+      <div className={styles.container2}><Button title='Execute check' onClick={handleCheck} /></div>
     </div>
   );
 }

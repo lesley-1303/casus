@@ -1,0 +1,36 @@
+/* CSS */
+.container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background-color: #fafafa;
+  color: black;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  font-family: Arial, sans-serif;
+}
+
+.file-upload {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.file-input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.file-info {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+.container2 {
+  max-width: 600px;
+  margin: 2rem auto;
+}

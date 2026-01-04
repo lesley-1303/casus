@@ -9,7 +9,7 @@ export default function Navbar() {
   const allPages: navBarProperty[] = [
     { name: "Login", route: "/", emoji: "🔑"},
     { name: "Home", route: "/home", emoji: "🏠" },
-    { name: "Xlslup", route: "/xlslup", emoji: "🏠" },
+    { name: "Xlslup", route: "/xlslup", emoji: "📝" },
   ];
 
   return (
