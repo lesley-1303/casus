@@ -89,12 +89,19 @@ def extract_text_with_formatting(page) -> List[Dict[str, Any]]:
     
     return lines
 
-def extract_content_sections(page, page_number: int, tables, table_bboxes) -> List[Dict[str, Any]]:
+def extract_content_sections(page, page_number: int, tables, table_bboxes, section_id_counter: int = 0) -> tuple[List[Dict[str, Any]], int]:
     """
     Extract content and identify sections based on titles
     
+    Args:
+        page: pdfplumber page object
+        page_number: current page number
+        tables: list of table objects
+        table_bboxes: list of table bounding boxes
+        section_id_counter: starting ID for sections (default 0)
+    
     Returns:
-        List of sections with their content
+        Tuple of (List of sections with their content, next section_id counter)
     """
     sections = []
     current_section = None
@@ -118,13 +125,14 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
         if not title_positions:
             full_text = page.extract_text()
             if full_text and full_text.strip():
-                return [{
+                return ([{
+                    "id": section_id_counter,
                     "type": "section",
                     "title": None,
                     "page": page_number,
                     "content": full_text.strip()
-                }]
-            return []
+                }], section_id_counter + 1)
+            return ([], section_id_counter)
         
         # Split content by titles
         for i, title_info in enumerate(title_positions):
@@ -137,13 +145,15 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
             section_text = '\n'.join([line['text'] for line in section_lines])
             
             sections.append({
+                "id": section_id_counter,
                 "type": "section",
                 "title": title_info['text'],
                 "page": page_number,
                 "content": section_text.strip() if section_text.strip() else ""
             })
+            section_id_counter += 1
         
-        return sections
+        return (sections, section_id_counter)
     
     else:
         # Has tables - need to handle mixed content
@@ -185,9 +195,11 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                                 current_section['content'] += '\n' + '\n'.join(current_text_buffer)
                             current_text_buffer = []
                         sections.append(current_section)
+                        section_id_counter += 1
                     
                     # Start new section
                     current_section = {
+                        "id": section_id_counter,
                         "type": "section",
                         "title": line['text'].strip(),
                         "page": page_number,
@@ -204,6 +216,7 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                     text_content = '\n'.join(current_text_buffer)
                     if current_section is None:
                         current_section = {
+                            "id": section_id_counter,
                             "type": "section",
                             "title": None,
                             "page": page_number,
@@ -219,6 +232,7 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
                 # Add table
                 if current_section is None:
                     current_section = {
+                        "id": section_id_counter,
                         "type": "section",
                         "title": None,
                         "page": page_number,
@@ -248,6 +262,7 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
             text_content = '\n'.join(current_text_buffer)
             if current_section is None:
                 current_section = {
+                    "id": section_id_counter,
                     "type": "section",
                     "title": None,
                     "page": page_number,
@@ -268,8 +283,9 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes) -> Li
         # Add last section
         if current_section is not None:
             sections.append(current_section)
+            section_id_counter += 1
         
-        return sections
+        return (sections, section_id_counter)
 
 @app.get("/")
 async def root():
@@ -287,7 +303,7 @@ async def extract_pdf(file: UploadFile = File(...)):
     Titles are defined as text with Arial-BoldMT font and size >= 12
     
     Returns:
-    - content: Array of sections (each starting with a title)
+    - content: Array of sections (each starting with a title, with unique IDs)
     - metadata: PDF information (pages, filename)
     """
     
@@ -305,6 +321,9 @@ async def extract_pdf(file: UploadFile = File(...)):
         contents = await file.read()
         pdf_file = io.BytesIO(contents)
         
+        # Initialize section ID counter
+        section_id_counter = 0
+        
         with pdfplumber.open(pdf_file) as pdf:
             # Add metadata
             result["metadata"] = {
@@ -321,7 +340,9 @@ async def extract_pdf(file: UploadFile = File(...)):
                 table_bboxes = [table.bbox for table in tables] if tables else []
                 
                 # Extract sections from this page
-                page_sections = extract_content_sections(page, page_number, tables, table_bboxes)
+                page_sections, section_id_counter = extract_content_sections(
+                    page, page_number, tables, table_bboxes, section_id_counter
+                )
                 result["content"].extend(page_sections)
         
         return result
