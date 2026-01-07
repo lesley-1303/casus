@@ -9,12 +9,11 @@ export async function POST(req) {
     const body = await req.json();
     const { rules, ruleTypeName, path } = body;
 
-    const ruleIds = await checkRules(rules, ruleTypeName, path);
+    const results = await checkRules(rules, ruleTypeName, path);
 
     return new Response(
       JSON.stringify({
-        success: true,
-        ruleIds,
+        results,
       }),
       {
         status: 200,

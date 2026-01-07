@@ -3,6 +3,7 @@ import { useState, ChangeEvent, useEffect } from 'react';
 import Button from '../components/button/button';
 import GenericSelect from '../components/genericselect/genericselect';
 import styles from "./home.module.css";
+import {RuleCheckResults} from '../components/results/RuleCheckResults';
 
 export default function Home() {
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function Home() {
   const [selectedRuleType, setSelectedRuleType] = useState<RuleType>(emptyRuleType);
   const [rules, setRules] = useState<Rule[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [results, setResults] = useState<CheckResults | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -200,7 +202,7 @@ export default function Home() {
       }
 
       const data = await response.json();
-      console.log('Check result:', data);
+      setResults(data.results);
     } catch (err: any) {
       setError(err.message);
       console.error('Error:', err);
@@ -245,6 +247,7 @@ export default function Home() {
         emptyItem={emptyRuleType}
       />
       <div className={styles.container2}><Button title='Execute check' onClick={handleCheck} /></div>
+      {results && <RuleCheckResults results={results} />}
     </div>
   );
 }
