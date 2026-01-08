@@ -134,81 +134,97 @@ def extract_text_with_formatting(page) -> List[Dict[str, Any]]:
 # SECTION EXTRACTION
 # -------------------------------------------------------------------
 
-def extract_content_sections(page, page_number: int, tables, table_bboxes, section_id_counter: int):
+def extract_all_content_sections(pdf):
+    """
+    Extract sections across all pages, maintaining section context
+    when pages don't start with a new title.
+    """
     sections = []
     current_section = None
     buffer = []
+    section_id_counter = 0
 
-    lines = extract_text_with_formatting(page)
-    items = []
+    for page_number, page in enumerate(pdf.pages, start=1):
+        lines = extract_text_with_formatting(page)
+        tables = page.find_tables()
+        table_bboxes = [t.bbox for t in tables]
+        
+        items = []
+        
+        for line in lines:
+            items.append({"type": "text", "y": line["y"], "line": line})
 
-    for line in lines:
-        items.append({"type": "text", "y": line["y"], "line": line})
+        for table, bbox in zip(tables, table_bboxes):
+            items.append({"type": "table", "y": bbox[1], "table": table})
 
-    for table, bbox in zip(tables, table_bboxes):
-        items.append({"type": "table", "y": bbox[1], "table": table})
+        items.sort(key=lambda x: x["y"])
 
-    items.sort(key=lambda x: x["y"])
+        for item in items:
+            if item["type"] == "text":
+                line = item["line"]
 
-    for item in items:
-        if item["type"] == "text":
-            line = item["line"]
+                if is_title(line["text"], line["chars"]):
+                    # Save previous section
+                    if current_section:
+                        if buffer:
+                            current_section["content"].append({
+                                "type": "text",
+                                "text": "\n".join(buffer)
+                            })
+                            buffer = []
 
-            if is_title(line["text"], line["chars"]):
-                if current_section:
-                    if buffer:
-                        current_section["content"].append({
-                            "type": "text",
-                            "text": "\n".join(buffer)
-                        })
-                        buffer = []
+                        current_section["content"] = deduplicate_section_content(
+                            current_section["content"]
+                        )
+                        sections.append(current_section)
 
-                    current_section["content"] = deduplicate_section_content(
-                        current_section["content"]
-                    )
-                    sections.append(current_section)
+                    # Start new section
                     section_id_counter += 1
+                    current_section = {
+                        "id": section_id_counter,
+                        "type": "section",
+                        "title": line["text"].strip(),
+                        "page": page_number,
+                        "content": []
+                    }
+                else:
+                    # Regular text - add to buffer
+                    buffer.append(line["text"])
 
-                current_section = {
-                    "id": section_id_counter,
-                    "type": "section",
-                    "title": line["text"].strip(),
-                    "page": page_number,
-                    "content": []
-                }
             else:
-                buffer.append(line["text"])
+                # Handle table
+                table_data = item["table"].extract()
+                if not table_data:
+                    continue
 
-        else:
-            table_data = item["table"].extract()
-            if not table_data:
-                continue
+                # If no section exists, create one
+                if not current_section:
+                    section_id_counter += 1
+                    current_section = {
+                        "id": section_id_counter,
+                        "type": "section",
+                        "title": None,
+                        "page": page_number,
+                        "content": []
+                    }
 
-            if not current_section:
-                current_section = {
-                    "id": section_id_counter,
-                    "type": "section",
-                    "title": None,
-                    "page": page_number,
-                    "content": []
-                }
+                # Flush text buffer before adding table
+                if buffer:
+                    current_section["content"].append({
+                        "type": "text",
+                        "text": "\n".join(buffer)
+                    })
+                    buffer = []
 
-            if buffer:
-                current_section["content"].append({
-                    "type": "text",
-                    "text": "\n".join(buffer)
-                })
-                buffer = []
+                # Add table if not fake
+                if not is_fake_table(table_data):
+                    current_section["content"].append({
+                        "type": "table",
+                        "headers": table_data[0],
+                        "data": table_data[1:]
+                    })
 
-            if is_fake_table(table_data):
-                continue
-            else:
-                current_section["content"].append({
-                    "type": "table",
-                    "headers": table_data[0],
-                    "data": table_data[1:]
-                })
-
+    # Don't forget the last section
     if current_section:
         if buffer:
             current_section["content"].append({
@@ -219,11 +235,9 @@ def extract_content_sections(page, page_number: int, tables, table_bboxes, secti
         current_section["content"] = deduplicate_section_content(
             current_section["content"]
         )
-
         sections.append(current_section)
-        section_id_counter += 1
 
-    return sections, section_id_counter
+    return sections
 
 # -------------------------------------------------------------------
 # API ENDPOINTS
@@ -243,7 +257,6 @@ async def extract_pdf(file: UploadFile = File(...)):
         pdf_file = io.BytesIO(contents)
 
         result = {"content": [], "metadata": {}}
-        section_id_counter = 0
 
         with pdfplumber.open(pdf_file) as pdf:
             result["metadata"] = {
@@ -251,19 +264,8 @@ async def extract_pdf(file: UploadFile = File(...)):
                 "pages": len(pdf.pages)
             }
 
-            for i, page in enumerate(pdf.pages):
-                tables = page.find_tables()
-                table_bboxes = [t.bbox for t in tables]
-
-                sections, section_id_counter = extract_content_sections(
-                    page,
-                    i + 1,
-                    tables,
-                    table_bboxes,
-                    section_id_counter
-                )
-
-                result["content"].extend(sections)
+            # Extract all sections across all pages
+            result["content"] = extract_all_content_sections(pdf)
 
         return result
 
