@@ -3,7 +3,7 @@ import { useState, ChangeEvent, useEffect } from 'react';
 import Button from '../components/button/button';
 import GenericSelect from '../components/genericselect/genericselect';
 import styles from "./home.module.css";
-import {RuleCheckResults} from '../components/results/RuleCheckResults';
+import { RuleCheckResults } from '../components/results/RuleCheckResults';
 
 export default function Home() {
   useEffect(() => {
@@ -212,41 +212,43 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.container}>
-      <h3>Choose PDF File</h3>
-      <div className={styles["file-upload"]}>
-        <input
-          type="file"
-          accept=".pdf"
-          onChange={handleFileChange}
-          className={styles["file-input"]}
+    <div>
+      <div className={styles.container}>
+        <h3>Choose PDF File</h3>
+        <div className={styles["file-upload"]}>
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            className={styles["file-input"]}
+          />
+        </div>
+
+        {file && (
+          <p className={styles["file-info"]}>
+            Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+          </p>
+        )}
+
+        <GenericSelect<RuleImport>
+          title="Select an Excel file"
+          items={ruleImports}
+          selectedItem={selectedRuleImport}
+          onChange={(item) => onRuleImportChange(item)}
+          Label={(m) => m.file_name}
+          emptyItem={emptyRuleImport}
         />
+
+        <GenericSelect<RuleType>
+          title="Select a Rule Type"
+          items={ruleTypes}
+          selectedItem={selectedRuleType}
+          onChange={(item) => onRuletypeChange(item)}
+          Label={(m) => m.name}
+          emptyItem={emptyRuleType}
+        />
+        <div className={styles.container2}><Button title='Execute check' onClick={handleCheck} /></div>
       </div>
-
-      {file && (
-        <p className={styles["file-info"]}>
-          Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
-        </p>
-      )}
-
-      <GenericSelect<RuleImport>
-        title="Select an Excel file"
-        items={ruleImports}
-        selectedItem={selectedRuleImport}
-        onChange={(item) => onRuleImportChange(item)}
-        Label={(m) => m.file_name}
-        emptyItem={emptyRuleImport}
-      />
-
-      <GenericSelect<RuleType>
-        title="Select a Rule Type"
-        items={ruleTypes}
-        selectedItem={selectedRuleType}
-        onChange={(item) => onRuletypeChange(item)}
-        Label={(m) => m.name}
-        emptyItem={emptyRuleType}
-      />
-      <div className={styles.container2}><Button title='Execute check' onClick={handleCheck} /></div>
       {results && <RuleCheckResults results={results} />}
     </div>
   );

@@ -10,7 +10,7 @@ export default function InputField(props: InputFieldProps) {
             {(variant === "text" || variant === "email" || variant === "password") && (
                 <input
                     type={variant}
-                    value={props.value}
+                    value={props.value ?? ""}
                     onChange={onChange}
                     className={props.classname ?? styles["input-field"]}
                     placeholder={props.placeholder}
